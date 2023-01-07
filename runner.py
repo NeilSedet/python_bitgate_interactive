@@ -71,50 +71,41 @@ class Coordinates:
 # Run a dictionary to figure out which operation to give it: use AND operation for now
 class Node:
     def __init__(
-        self, value: int, gate: int, neighbors: List[int], rectangle: pygame.Rect
+        self,
+        value: int,
+        gate: int,
+        neighbors: List[int],
+        rectangle: pygame.Rect,
+        visited: bool,
     ) -> None:
         self.nodeValue = value
         self.whichGate = gate
         self.nodeNeighbors = neighbors
         self.drawnRectangle = rectangle
+        self.isVisited = visited
 
     def __repr__(self) -> str:
         # TODO
         return f"(nodeValue: {self.nodeValue}, whichGate: {self.whichGate})"
 
 
-def nodeRecursion(
-    currNode: int, nodeList: List[Node], adjList: List[List[int]], isVisited: List[bool]
-):
+def nodeRecursion(currNode: int, nodeList: List[Node], isVisited: List[bool]):
     nodeList[currNode].isVisited = True
 
     if nodeList[currNode].nodeValue != -1:
         return nodeList[currNode].nodeValue
 
     returnValue = -1
-    for nextNode in adjList[currNode]:
+    for nextNode in nodeList[currNode].nodeNeighbors:
 
         if not isVisited[nextNode]:
             if returnValue == -1:
-                returnValue = nodeRecursion(nextNode, nodeList, adjList, isVisited)
+                returnValue = nodeRecursion(nextNode, nodeList, isVisited)
             else:
-                returnValue &= nodeRecursion(nextNode, nodeList, adjList, isVisited)
+                returnValue &= nodeRecursion(nextNode, nodeList, isVisited)
 
     nodeList[currNode].nodeValue = returnValue
     return nodeList[currNode].nodeValue
-
-
-pygame.init()
-pygame.display.set_caption("Bitwise Demonstrator")
-
-size = [800, 600]
-screen = pygame.display.set_mode(size)
-
-done = False
-clock = pygame.time.Clock()
-color = (255, 255, 255)
-
-# rectangleArray: List[pygame.Rect] = []
 
 
 def isWithin(rectangle: pygame.Rect, coordinates: Coordinates) -> bool:
@@ -129,12 +120,14 @@ def isWithin(rectangle: pygame.Rect, coordinates: Coordinates) -> bool:
     return y >= top and y <= bottom and x >= left and x <= right
 
 
-def handleMouseInRect() -> int:
+def handleMouseInRect(nodeList: List[Node]) -> int:
     mouseState = pygame.mouse.get_pressed()
+
     if mouseState[0]:
         x, y = pygame.mouse.get_pos()
         newCoordinates = Coordinates(x, y)
 
+        rectangleArray = [x.drawnRectangle for x in nodeList]
         for i in range(len(rectangleArray)):
             if isWithin(rectangleArray[i], newCoordinates):
                 return i
@@ -142,9 +135,22 @@ def handleMouseInRect() -> int:
     return -1
 
 
+pygame.init()
+pygame.display.set_caption("Bitwise Demonstrator")
+
+size = [800, 600]
+screen = pygame.display.set_mode(size)
+
+done = False
+clock = pygame.time.Clock()
+color = (255, 255, 255)
+
 isKeyPressed = False
 actionQueue: List[int] = []
 prevAction = -1
+
+nodeList: List[Node] = []
+
 while not done:
     clock.tick(10)
     # Last input record
@@ -166,11 +172,12 @@ while not done:
         if isKeyPressed:
             x, y = pygame.mouse.get_pos()
             newRectangle = pygame.Rect(x, y, size[0], size[1])
-            # rectangleArray.append(newRectangle)
+            newNode = Node(-1, -1, [], newRectangle, False)
 
+            nodeList.append(newNode)
             isKeyPressed = False
 
-        currAction = handleMouseInRect()
+        currAction = handleMouseInRect(nodeList)
         if currAction != -1:
             if prevAction != -1:
                 pass
@@ -182,7 +189,9 @@ while not done:
 
     # Draw background
     screen.fill(color)
+    print(nodeList)
 
+    rectangleArray = [x.drawnRectangle for x in nodeList]
     for rectangle in rectangleArray:
         # textRect = .get_rect()
 
