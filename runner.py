@@ -1,18 +1,59 @@
 import pygame
 from typing import List
 
-# We need the coordinates of each node
-# We need the state of each node
-# We need to figure out which node it is
+# with open("input.txt", "r") as file:
+#     lines = file.readlines()
 
-# Input format:
-# N M
-# All node statuses
-# 0 is a value
-# 1 is a gate
-# All edges
+#     inputValues = []
+#     for line in lines:
+#         line = line.rstrip()
+#         line = line.split(" ")
 
-# make a class that stores x and y information
+#         inputValues.extend(line)
+
+#     inputPointer = 0
+
+#     def getValue():
+#         global inputPointer
+#         nextVal = inputValues[inputPointer]
+#         inputPointer += 1
+
+#         return int(nextVal)
+
+#     numNodes, edgeCount = getValue(), getValue()
+
+#     # Store a node that's the top node
+#     headNode = -1
+#     nodeList = []
+#     adjList = [[] for i in range(numNodes)]
+
+#     for i in range(numNodes):
+#         # The status of each node
+#         inputType, nodeValue = getValue(), getValue()
+
+#         if inputType == 0:
+#             node = Node(nodeValue, -1)
+#         elif inputType == 1:
+#             node = Node(-1, nodeValue)
+
+#         assert inputType == 0 or inputType == 1
+#         nodeList.append(node)
+
+#     # 0 indexed
+#     for i in range(edgeCount):
+#         u, v = getValue(), getValue()
+#         u -= 1
+#         v -= 1
+
+#         adjList[u].append(v)
+
+#     # assert headNode != -1
+
+#     isVisited = [False for i in range(numNodes)]
+#     outputVal = nodeRecursion(headNode, nodeList, adjList, isVisited)
+
+
+# Make a class that stores x and y information
 class Coordinates:
     def __init__(self, x_value: int, y_value: int) -> None:
         self.x = x_value
@@ -27,13 +68,18 @@ class Coordinates:
         return False
 
 
-# run a dictionary to figure out which operation to give it: use AND operation for now
+# Run a dictionary to figure out which operation to give it: use AND operation for now
 class Node:
-    def __init__(self, value: int, gate: int) -> None:
+    def __init__(
+        self, value: int, gate: int, neighbors: List[int], rectangle: pygame.Rect
+    ) -> None:
         self.nodeValue = value
         self.whichGate = gate
+        self.nodeNeighbors = neighbors
+        self.drawnRectangle = rectangle
 
     def __repr__(self) -> str:
+        # TODO
         return f"(nodeValue: {self.nodeValue}, whichGate: {self.whichGate})"
 
 
@@ -58,72 +104,18 @@ def nodeRecursion(
     return nodeList[currNode].nodeValue
 
 
-with open("input.txt", "r") as file:
-    lines = file.readlines()
-
-    inputValues = []
-    for line in lines:
-        line = line.rstrip()
-        line = line.split(" ")
-
-        inputValues.extend(line)
-
-    inputPointer = 0
-
-    def getValue():
-        global inputPointer
-        nextVal = inputValues[inputPointer]
-        inputPointer += 1
-
-        return int(nextVal)
-
-    numNodes, edgeCount = getValue(), getValue()
-
-    # Store a node that's the top node
-    headNode = -1
-    nodeList = []
-    adjList = [[] for i in range(numNodes)]
-
-    for i in range(numNodes):
-        # The status of each node
-        inputType, nodeValue = getValue(), getValue()
-
-        if inputType == 0:
-            node = Node(nodeValue, -1)
-        elif inputType == 1:
-            node = Node(-1, nodeValue)
-
-        assert inputType == 0 or inputType == 1
-        nodeList.append(node)
-
-    # 0 indexed
-    for i in range(edgeCount):
-        u, v = getValue(), getValue()
-        u -= 1
-        v -= 1
-
-        adjList[u].append(v)
-
-    # assert headNode != -1
-
-    isVisited = [False for i in range(numNodes)]
-    outputVal = nodeRecursion(headNode, nodeList, adjList, isVisited)
-
-
 pygame.init()
 pygame.display.set_caption("Bitwise Demonstrator")
 
 size = [800, 600]
 screen = pygame.display.set_mode(size)
 
-
 done = False
 clock = pygame.time.Clock()
 color = (255, 255, 255)
 
-rectangleArray: List[pygame.Rect] = []
+# rectangleArray: List[pygame.Rect] = []
 
-# If you click two rectangles
 
 def isWithin(rectangle: pygame.Rect, coordinates: Coordinates) -> bool:
     # print(rectangle.top, rectangle.left, rectangle.bottom, rectangle.right)
@@ -151,11 +143,10 @@ def handleMouseInRect() -> int:
 
 
 isKeyPressed = False
-actionQueue : List[int] = []
+actionQueue: List[int] = []
 prevAction = -1
 while not done:
     clock.tick(10)
-
     # Last input record
 
     # Exit function
@@ -167,8 +158,6 @@ while not done:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 isKeyPressed = True
-                # print("A key has been pressed")
-
 
     # Handling Mouse events
     size = (50, 50)
@@ -177,42 +166,30 @@ while not done:
         if isKeyPressed:
             x, y = pygame.mouse.get_pos()
             newRectangle = pygame.Rect(x, y, size[0], size[1])
-            rectangleArray.append(newRectangle)
-		
+            # rectangleArray.append(newRectangle)
+
             isKeyPressed = False
-        
+
         currAction = handleMouseInRect()
         if currAction != -1:
             if prevAction != -1:
+                pass
                 # TODO Might be backwards
-                adjList[prevAction] = currAction
+                # adjList[prevAction] = currAction
                 # Render Node
                 # Make a line between prevAction and whichRectangle
-            # prevAction = whichRectangle
             # actionQueue.append(whichRectangle)
-        # prevAction = handleMouseInRect()
-        
-
 
     # Draw background
     screen.fill(color)
 
-    # print(handleMouseInRect())
-    
-    # if pygame.MOUSEBUTTONDOWN:
-    # print(pygame.MOUSEBUTTONDOWN)
-
-    # print(rectangleArray)
     for rectangle in rectangleArray:
-        # y = coordinates.y
-        # drawRect(x, y, 50, 50)
         # textRect = .get_rect()
-        
-        # # set the center of the rectangular object.
+
+        # # Set the center of the rectangular object.
         # textRect.center = (X // 2, Y // 2)
 
         pygame.draw.rect(screen, (0, 0, 0), rectangle)
-        # isWithin(rectangle, Coordinates(0, 0))
 
     # This function must write after all the other drawing commands.
     pygame.display.flip()
