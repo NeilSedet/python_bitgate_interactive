@@ -78,6 +78,7 @@ class Node:
         rectangle: pygame.Rect,
         visited: bool,
     ) -> None:
+
         self.nodeValue = value
         self.whichGate = gate
         self.nodeNeighbors = neighbors
@@ -86,7 +87,15 @@ class Node:
 
     def __repr__(self) -> str:
         # TODO
-        return f"(nodeValue: {self.nodeValue}, whichGate: {self.whichGate})"
+        stringConcat = (
+            f"(nodeValue: {self.nodeValue}, "
+            f"whichGate: {self.whichGate}, "
+            f"nodeNeighbors: {self.nodeNeighbors}, "
+            f"drawnRectangle: {self.drawnRectangle}, "
+            f"isVisited: {self.isVisited})"
+        )
+
+        return stringConcat
 
 
 def nodeRecursion(currNode: int, nodeList: List[Node], isVisited: List[bool]):
@@ -138,27 +147,33 @@ def handleMouseInRect(nodeList: List[Node]) -> int:
 pygame.init()
 pygame.display.set_caption("Bitwise Demonstrator")
 
-size = [800, 600]
-screen = pygame.display.set_mode(size)
+gameObject = type(
+    "gameObject",
+    (object,),
+    dict(screenSize=None, screenColor=None, isDone=None, screenObj=None, clockObj=None),
+)
 
-done = False
-clock = pygame.time.Clock()
-color = (255, 255, 255)
+thisGame = gameObject()
+thisGame.screenSize = [800, 600]
+thisGame.screenColor = (255, 255, 255)
+thisGame.isDone = False
+thisGame.screenObj = pygame.display.set_mode(thisGame.screenSize)
+thisGame.clockObj = pygame.time.Clock()
 
 isKeyPressed = False
 actionQueue: List[int] = []
+nodeList: List[Node] = []
 prevAction = -1
 
-nodeList: List[Node] = []
 
-while not done:
-    clock.tick(10)
+while not thisGame.isDone:
     # Last input record
+    thisGame.clockObj.tick(10)
 
     # Exit function
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            done = True
+            thisGame.isDone = True
 
         # Handling Keypress events
         if event.type == pygame.KEYDOWN:
@@ -166,39 +181,52 @@ while not done:
                 isKeyPressed = True
 
     # Handling Mouse events
-    size = (50, 50)
+    rectSize = (50, 50)
     mouseState = pygame.mouse.get_pressed()
     if mouseState[0]:
         if isKeyPressed:
             x, y = pygame.mouse.get_pos()
-            newRectangle = pygame.Rect(x, y, size[0], size[1])
+            newRectangle = pygame.Rect(x, y, rectSize[0], rectSize[1])
             newNode = Node(-1, -1, [], newRectangle, False)
 
             nodeList.append(newNode)
             isKeyPressed = False
 
-        currAction = handleMouseInRect(nodeList)
-        if currAction != -1:
-            if prevAction != -1:
-                pass
-                # TODO Might be backwards
-                # adjList[prevAction] = currAction
-                # Render Node
-                # Make a line between prevAction and whichRectangle
-            # actionQueue.append(whichRectangle)
+        else:
+            # Might be backwards
+            currAction = handleMouseInRect(nodeList)
+            actionQueue.append(currAction)
+
+            if currAction != -1 and prevAction != -1:
+                nodeList[prevAction].nodeNeighbors.append(currAction)
+                prevAction = -1
+            else:
+                prevAction = currAction
 
     # Draw background
-    screen.fill(color)
-    print(nodeList)
+    thisGame.screenObj.fill(thisGame.screenColor)
+    # print(nodeList)
 
-    rectangleArray = [x.drawnRectangle for x in nodeList]
-    for rectangle in rectangleArray:
+    # Make a line between prevAction and whichRectangle
+    # Render everything
+
+    for node in nodeList:
         # textRect = .get_rect()
-
         # # Set the center of the rectangular object.
         # textRect.center = (X // 2, Y // 2)
 
-        pygame.draw.rect(screen, (0, 0, 0), rectangle)
+        thisRectangle = node.drawnRectangle
+        pygame.draw.rect(thisGame.screenObj, (0, 0, 0), thisRectangle)
+
+        lineColor = (0, 0, 0)
+        for neighbor in node.nodeNeighbors:
+            nextRectangle = nodeList[neighbor].drawnRectangle
+            pygame.draw.line(
+                thisGame.screenObj,
+                lineColor,
+                thisRectangle.center,
+                nextRectangle.center,
+            )
 
     # This function must write after all the other drawing commands.
     pygame.display.flip()
